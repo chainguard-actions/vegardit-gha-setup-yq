@@ -10,48 +10,35 @@
 
 **Harden Agent Version:** `2`
 
-Action **vegardit--gha-setup-yq/1.1.1** was hardened automatically. 2 finding(s) were identified and resolved across 1 iteration(s).
+Action **vegardit--gha-setup-yq/1.1.1** was hardened automatically. 1 finding(s) were identified and resolved across 1 iteration(s).
 
 ## Findings Fixed
 
 ### unpinned-uses (severity: high)
 
-Two `uses:` references in action.yml pin to a mutable version tag (`@v5`) rather than a full 40-character commit SHA. This means the action can silently pull in changed code on future runs, enabling supply-chain attacks.
+Two `uses:` references in action.yml use mutable version tags (@v5) instead of pinned 40-character SHA commit digests. This exposes the action to supply-chain attacks if the upstream action tag is moved or compromised.
 
 Failing references:
-- `uses: actions/cache/restore@v5` (line 39)
-- `uses: actions/cache/save@v5` (line 183)
+- `uses: actions/cache/restore@v5` (line 34)
+- `uses: actions/cache/save@v5` (line 175)
 
-These should be pinned to their full SHA digests, e.g.:
-  `uses: actions/cache/restore@<40-char-sha> # v5`
-
-Locations:
-
-- `action.yml:39`
-- `action.yml:183`
-
-### github-env-injection (severity: high)
-
-The `run:` block in the 'yq: setup' step writes the inherited process env var `$RUNNER_TEMP` to `$GITHUB_PATH` without applying the required sanitization step (`printf '%s' ... | tr -d '\n\r'`). In a composite action, `$RUNNER_TEMP` is an inherited env var not set within the same `run:` block — it is controlled by the calling workflow environment and must be treated as untrusted. A calling workflow could set `RUNNER_TEMP` to a value containing newlines, allowing injection of arbitrary entries into `$GITHUB_PATH`.
-
-Offending line (~line 157):
-  `echo "$RUNNER_TEMP/yq" >> "$GITHUB_PATH"`
-
-Correct pattern:
-  `safe=$(printf '%s' "$RUNNER_TEMP" | tr -d '\n\r')`
-  `echo "${safe}/yq" >> "$GITHUB_PATH"`
+These should be pinned to their full SHA digests, e.g. `uses: actions/cache/restore@<40-char-sha> # v5`.
 
 Locations:
 
-- `action.yml:157`
+- `action.yml:34`
+- `action.yml:175`
 
 ## Iteration Notes
 
 ### Iteration 1
 
-**Fixes applied:** unpinned-uses, github-env-injection
+**Fixes applied:** unpinned-uses
 
 **Notes:**
 
-Fixed three issues in hardened/action/action.yml: (1) Pinned `actions/cache/restore@v5` to full SHA `caa296126883cff596d87d8935842f9db880ef25 # v5`; (2) Pinned `actions/cache/save@v5` to the same full SHA `caa296126883cff596d87d8935842f9db880ef25 # v5`; (3) Sanitized `$RUNNER_TEMP` before writing to `$GITHUB_PATH` by using `safe_runner_temp=$(printf '%s' "$RUNNER_TEMP" | tr -d '\n\r')` and then `echo "${safe_runner_temp}/yq" >> "$GITHUB_PATH"` to prevent newline injection.
+Pinned both unpinned `uses:` references in hardened/action/action.yml to their full SHA digests:
+- `actions/cache/restore@v5` → `actions/cache/restore@caa296126883cff596d87d8935842f9db880ef25 # v5` (line 34)
+- `actions/cache/save@v5` → `actions/cache/save@caa296126883cff596d87d8935842f9db880ef25 # v5` (line 175)
+Both resolve to the same SHA as they are sub-actions of the same `actions/cache` repository at the v5 tag.
 

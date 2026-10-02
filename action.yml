@@ -49,7 +49,7 @@ runs:
     - name: 'yq: cache restore'
       id: YQ-CACHE
       if: ${{ (inputs.use-cache == true || inputs.use-cache == 'true') && !env.ACT }} # https://github.com/nektos/act#skipping-steps
-      uses: chainguard-actions/actions-cache/restore@dc4b8a9beaba8dd7fead89b3b3df02fb4bc6336a # v5
+      uses: chainguard-actions/actions-cache/restore@dc4b8a9beaba8dd7fead89b3b3df02fb4bc6336a # v5 https://github.com/actions/cache/tree/main/restore
       with:
         path: ${{ runner.temp }}/yq
         key: ${{ runner.os }}-${{ runner.arch }}-yq-${{ inputs.version }}
@@ -166,8 +166,7 @@ runs:
               ;;
           esac
 
-          safe_runner_temp=$(printf '%s' "$RUNNER_TEMP" | tr -d '\n\r')
-          echo "${safe_runner_temp}/yq" >> "$GITHUB_PATH"
+          echo "$RUNNER_TEMP/yq" >> "$GITHUB_PATH"
 
           # prepare cache update
           if [[ $INPUTS_USE_CACHE == 'true' && ${ACT:-} != 'true' ]]; then # $ACT is set when running via nektos/act
