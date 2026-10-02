@@ -1,0 +1,69 @@
+name: Test latest version install
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          version: latest
+          use-cache: 'false'
+
+      - name: Assert version output is set
+        env:
+          VERSION: ${{ steps.action.outputs.version }}
+        run: |
+          echo "version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          # Version should look like a semver (e.g. 4.44.3)
+          if ! echo "$VERSION" | grep -qE '^[0-9]+\.[0-9]+\.[0-9]+'; then
+            echo "FAIL: version '$VERSION' does not look like a semver"
+            exit 1
+          fi
+          echo "PASS: version=$VERSION"
+
+      - name: Assert path output is set and binary exists
+        env:
+          YQ_PATH: ${{ steps.action.outputs.path }}
+        run: |
+          echo "path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$YQ_PATH" ]; then
+            echo "FAIL: yq binary not found at $YQ_PATH"
+            exit 1
+          fi
+          echo "PASS: yq binary exists at $YQ_PATH"
+
+      - name: Assert yq is on PATH and functional
+        run: |
+          which yq
+          yq --version
+          # Test basic YAML processing (yq v4 outputs raw strings for string values by default)
+          result=$(echo 'key: hello' | yq '.key')
+          echo "result: $result"
+          if [ "$result" != "hello" ]; then
+            echo "FAIL: yq did not parse YAML correctly, got: $result"
+            exit 1
+          fi
+          echo "PASS: yq processes YAML correctly"
+
+      - name: Assert yq can process JSON input
+        run: |
+          # yq v4 can process JSON natively (no -r flag needed, strings output without quotes)
+          result=$(echo '{"key": "hello"}' | yq '.key')
+          echo "result: $result"
+          if [ "$result" != "hello" ]; then
+            echo "FAIL: yq did not parse JSON correctly, got: $result"
+            exit 1
+          fi
+          echo "PASS: yq processes JSON correctly"

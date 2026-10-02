@@ -1,0 +1,51 @@
+name: Test basic usage (version any)
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          version: any
+          use-cache: 'false'
+
+      - name: Assert version output is set
+        env:
+          VERSION: ${{ steps.action.outputs.version }}
+        run: |
+          echo "version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          echo "PASS: version=$VERSION"
+
+      - name: Assert path output is set
+        env:
+          YQ_PATH: ${{ steps.action.outputs.path }}
+        run: |
+          echo "path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$YQ_PATH" ]; then
+            echo "FAIL: yq binary not found at $YQ_PATH"
+            exit 1
+          fi
+          echo "PASS: yq binary exists at $YQ_PATH"
+
+      - name: Assert yq is functional
+        run: |
+          echo "Testing yq functionality..."
+          result=$(echo 'key: value' | yq '.key')
+          echo "result: $result"
+          if [ "$result" != "value" ]; then
+            echo "FAIL: yq did not parse YAML correctly, got: $result"
+            exit 1
+          fi
+          echo "PASS: yq works correctly"

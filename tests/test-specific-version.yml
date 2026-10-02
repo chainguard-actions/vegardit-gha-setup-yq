@@ -1,0 +1,67 @@
+name: Test specific version install
+on:
+  workflow_dispatch:
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
+
+      - id: action
+        uses: .
+        with:
+          version: '4.44.3'
+          use-cache: 'false'
+
+      - name: Assert version output matches requested version
+        env:
+          VERSION: ${{ steps.action.outputs.version }}
+        run: |
+          echo "version: $VERSION"
+          if [ -z "$VERSION" ]; then
+            echo "FAIL: version output is empty"
+            exit 1
+          fi
+          if [ "$VERSION" != "4.44.3" ]; then
+            echo "FAIL: expected version 4.44.3 but got $VERSION"
+            exit 1
+          fi
+          echo "PASS: version=$VERSION"
+
+      - name: Assert path output is set and binary exists
+        env:
+          YQ_PATH: ${{ steps.action.outputs.path }}
+        run: |
+          echo "path: $YQ_PATH"
+          if [ -z "$YQ_PATH" ]; then
+            echo "FAIL: path output is empty"
+            exit 1
+          fi
+          if [ ! -f "$YQ_PATH" ]; then
+            echo "FAIL: yq binary not found at $YQ_PATH"
+            exit 1
+          fi
+          echo "PASS: yq binary exists at $YQ_PATH"
+
+      - name: Assert yq reports correct version
+        run: |
+          raw_version=$(yq --version)
+          echo "raw version output: $raw_version"
+          # yq v4 outputs: "yq (https://github.com/mikefarah/yq/) version v4.44.3"
+          installed_version=$(echo "$raw_version" | grep -o '[^ ]*$' | grep -o '[^/]*$' | cut -c2-)
+          echo "installed_version: $installed_version"
+          if [ "$installed_version" != "4.44.3" ]; then
+            echo "FAIL: yq --version reports $installed_version, expected 4.44.3"
+            exit 1
+          fi
+          echo "PASS: yq version is correct"
+
+      - name: Assert yq can process YAML
+        run: |
+          result=$(echo 'name: yq-test' | yq '.name')
+          echo "result: $result"
+          if [ "$result" != "yq-test" ]; then
+            echo "FAIL: yq did not parse YAML correctly, got: $result"
+            exit 1
+          fi
+          echo "PASS: yq processes YAML correctly"
