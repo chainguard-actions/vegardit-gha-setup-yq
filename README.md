@@ -6,9 +6,9 @@ Hardened by [Chainguard](https://www.chainguard.dev) from the upstream action at
 
 ## Versions
 
-| Version | Tag | Upstream commit |
-|---------|-----|-----------------|
-| 1.1.1 | [`1.1.1`](https://github.com/chainguard-actions/vegardit-gha-setup-yq/tree/1.1.1) | [`95fc563`](https://github.com/vegardit/gha-setup-yq/commit/95fc563100306ca9918e9d18f38e85430ba285bc) |
+| Version | Tag | Upstream commit | Hardening report |
+|---------|-----|-----------------|------------------|
+| 1.1.1 | [`1.1.1`](https://github.com/chainguard-actions/vegardit-gha-setup-yq/tree/1.1.1) | [`95fc563`](https://github.com/vegardit/gha-setup-yq/commit/95fc563100306ca9918e9d18f38e85430ba285bc) | [`HARDENING.md`](https://github.com/chainguard-actions/vegardit-gha-setup-yq/blob/1.1.1/HARDENING.md) |
 
 ## Privacy
 
